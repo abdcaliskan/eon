@@ -9,26 +9,26 @@ TELEMETRY_CSV = os.path.join(BASE_DIR, "battery_telemetry.csv")
 
 def export_data():
     if not os.path.exists(DB_NAME):
-        print(f"Hata: Veritabanı bulunamadı ({DB_NAME}).")
+        print(f"Error: Database file not found ({DB_NAME}).")
         return
         
     conn = sqlite3.connect(DB_NAME)
     
-    print("Veritabanından veriler okunuyor (Türkçe/Avrupa Bölgesel Ayarlarına Uyumlu)...")
+    print("Reading data from database (Turkish/European Regional Settings Compatible)...")
     
-    # trades_table verisini çek
+    # Export trades_table
     trades_df = pd.read_sql_query("SELECT * FROM trades_table", conn)
-    # separator olarak ';' ve ondalık olarak ',' kullanıyoruz.
+    # Using ';' separator and ',' decimal for Turkish/European Power BI compatibility
     trades_df.to_csv(TRADES_CSV, index=False, sep=';', decimal=',', encoding='utf-8-sig')
-    print(f"-> İşlem verileri kaydedildi: {TRADES_CSV} ({len(trades_df)} satır)")
+    print(f"-> Bilateral trades data saved to: {TRADES_CSV} ({len(trades_df)} rows)")
     
-    # battery_status_table verisini çek
+    # Export battery_status_table
     telemetry_df = pd.read_sql_query("SELECT * FROM battery_status_table", conn)
     telemetry_df.to_csv(TELEMETRY_CSV, index=False, sep=';', decimal=',', encoding='utf-8-sig')
-    print(f"-> Telemetri verileri kaydedildi: {TELEMETRY_CSV} ({len(telemetry_df)} satır)")
+    print(f"-> Telemetry data saved to: {TELEMETRY_CSV} ({len(telemetry_df)} rows)")
     
     conn.close()
-    print("\nPower BI aktarımı için Türkçe uyumlu CSV dosyaları başarıyla güncellendi!")
+    print("\nAll CSV data files successfully updated for Power BI ingestion!")
 
 if __name__ == "__main__":
     export_data()

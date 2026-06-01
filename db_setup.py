@@ -9,7 +9,7 @@ def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
-    # 1. trades_table oluşturma
+    # 1. Create trades_table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS trades_table (
         trade_id TEXT PRIMARY KEY,
@@ -21,7 +21,7 @@ def init_db():
     )
     """)
     
-    # 2. battery_status_table oluşturma
+    # 2. Create battery_status_table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS battery_status_table (
         telemetry_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,29 +35,29 @@ def init_db():
     
     conn.commit()
     conn.close()
-    print(f"Veritabanı tabloları oluşturuldu: {DB_NAME}")
+    print(f"Database tables initialized: {DB_NAME}")
 
 def populate_mock_data():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
-    # Tabloları temizle
+    # Clear tables
     cursor.execute("DELETE FROM trades_table")
     cursor.execute("DELETE FROM battery_status_table")
     
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     
-    # --- trades_table Verisi Ekleme ---
-    # BUY: şarj için ucuz fiyatlarla alış, SELL: deşarj için yüksek fiyatlarla satış
+    # --- Populate trades_table ---
+    # BUY: Charge at low prices, SELL: Discharge at peak prices
     trades = [
-        # Gece şarjı (Düşük fiyatlar)
+        # Night charging (low prices)
         ("T-001", f"{yesterday}T02:00:00", "BUY", 25.0, 12.50, "COMPLETED"),
-        ("T-002", f"{yesterday}T04:00:00", "BUY", 25.0, -8.20, "COMPLETED"),  # Negatif Fiyat fırsatı!
-        # Sabah deşarjı (Pik saatler)
+        ("T-002", f"{yesterday}T04:00:00", "BUY", 25.0, -8.20, "COMPLETED"),  # Negative price opportunity
+        # Morning discharging (peak hours)
         ("T-003", f"{yesterday}T08:00:00", "SELL", 20.0, 95.40, "COMPLETED"),
-        # Öğle şarjı (Güneş enerjisi bolluğu / ucuz fiyat)
+        # Noon charging (solar peak / cheap price)
         ("T-004", f"{yesterday}T12:00:00", "BUY", 30.0, 15.10, "COMPLETED"),
-        # Akşam deşarjı (Yüksek akşam piki fiyatları)
+        # Evening discharging (peak prices)
         ("T-005", f"{yesterday}T19:00:00", "SELL", 25.0, 142.80, "COMPLETED"),
         ("T-006", f"{yesterday}T20:00:00", "SELL", 25.0, 135.00, "COMPLETED")
     ]
@@ -67,47 +67,46 @@ def populate_mock_data():
         VALUES (?, ?, ?, ?, ?, ?)
     """, trades)
     
-    # --- battery_status_table Verisi Ekleme (5'er dakikalık periyotlarla) ---
-    # BESS Kapasitesi: 50 MW / 100 MWh (2 saatlik depolama)
+    # --- Populate battery_status_table (5-minute telemetry intervals) ---
+    # BESS Capacity: 50 MW / 100 MWh
     max_capacity_mwh = 100.0
-    current_soc_mwh = 10.0  # Başlangıç doluluğu %10
+    current_soc_mwh = 10.0  # Initial SoC at 10%
     
     telemetry_data = []
     
     start_time = datetime.datetime.combine(yesterday, datetime.time.min)
-    for step in range(288):  # 24 saat * 12 (5'er dakika) = 288 periyot
+    for step in range(288):  # 24 hours * 12 (5-minute intervals) = 288 periods
         current_time = start_time + datetime.timedelta(minutes=5 * step)
         time_str = current_time.strftime("%Y-%m-%dT%H:%M:%S")
         hour = current_time.hour
         
-        # Güç profili (power_mw: negatif = şarj, pozitif = deşarj)
-        if 1 <= hour < 3: # Gece şarj 1. etap
+        # Power profile (power_mw: negative = charge, positive = discharge)
+        if 1 <= hour < 3:
             power = -20.0  # MW
-        elif 3 <= hour < 5: # Gece şarj 2. etap
+        elif 3 <= hour < 5:
             power = -20.0
-        elif 7 <= hour < 9: # Sabah deşarj
+        elif 7 <= hour < 9:
             power = 20.0
-        elif 11 <= hour < 14: # Öğle şarj
+        elif 11 <= hour < 14:
             power = -15.0
-        elif 18 <= hour < 21: # Akşam deşarj
+        elif 18 <= hour < 21:
             power = 25.0
         else:
             power = 0.0  # Idle
             
-        # SoC hesaplama: Enerji (MWh) = Güç (MW) * Zaman (Saat) -> 5 dakika = 1/12 saat
-        # Güç negatifse şarj (soC artar), pozitifse deşarj (soC azalır)
-        energy_change = -power * (5.0 / 60.0)  # power_mw negatif ise + değer verir, pozitif ise - değer verir
+        # SoC Calculation: Energy (MWh) = Power (MW) * Time (Hours) -> 5 mins = 1/12 hour
+        energy_change = -power * (5.0 / 60.0)
         
-        # Sistem kayıpları (Şarj verimi %95, deşarj verimi %95, RTE yaklaşık %90)
+        # System losses (95% charge efficiency, 95% discharge efficiency, RTE ~90%)
         if energy_change > 0:
-            energy_change *= 0.95  # Şarj verim kaybı
+            energy_change *= 0.95  # Charge losses
         elif energy_change < 0:
-            energy_change /= 0.95  # Deşarj verim kaybı
+            energy_change /= 0.95  # Discharge losses
             
-        current_soc_mwh = max(10.0, min(max_capacity_mwh, current_soc_mwh + energy_change)) # min %10, max %100 limitleri
+        current_soc_mwh = max(10.0, min(max_capacity_mwh, current_soc_mwh + energy_change)) # bounds at 10% to 100%
         soc_pct = (current_soc_mwh / max_capacity_mwh) * 100.0
         
-        # Sıcaklık simülasyonu
+        # Temperature simulation
         temp = 20.0 + (abs(power) * 0.15) + random.uniform(-0.5, 0.5)
         
         telemetry_data.append((time_str, power, soc_pct, current_soc_mwh, temp))
@@ -119,7 +118,7 @@ def populate_mock_data():
     
     conn.commit()
     conn.close()
-    print(f"Mock telemetri ve işlem verileri başarıyla eklendi! (Kayıt sayısı: {len(telemetry_data)})")
+    print(f"Mock telemetry and trading data successfully added! (Record count: {len(telemetry_data)})")
 
 if __name__ == "__main__":
     init_db()

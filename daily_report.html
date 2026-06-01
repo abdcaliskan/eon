@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E.ON BESS Günlük Performans Raporu</title>
+    <title>E.ON BESS Daily Performance Report</title>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -195,75 +195,75 @@
     <div class="container">
         <header>
             <div class="logo-area">
-                <h1>E.ON Bavyera 50 MW BESS</h1>
-                <span>Intraday Algoritmik Trading Raporu</span>
+                <h1>E.ON Bavaria 50 MW BESS</h1>
+                <span>Intraday Algorithmic Trading Performance</span>
             </div>
-            <div class="date-badge">Tarih: 28.05.2026</div>
+            <div class="date-badge">Date: 31.05.2026</div>
         </header>
         
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-title">Günlük Net Arbitraj Geliri</div>
+                <div class="kpi-title">Daily Net Arbitrage Revenue</div>
                 <div class="kpi-value positive">+8,292.50 EUR</div>
-                <div class="kpi-desc">BUY ve SELL işlemleri arası net nakit farkı.</div>
+                <div class="kpi-desc">Net profit difference between BUY and SELL executions.</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-title">Round-Trip Efficiency (RTE)</div>
-                <div class="kpi-value" style="color: var(--primary);">92.0%</div>
-                <div class="kpi-desc">Fiziksel Deşarj / Şarj enerji dönüşüm verimliliği.</div>
+                <div class="kpi-value" style="color: var(--primary);">92.00%</div>
+                <div class="kpi-desc">Physical Discharge / Charge energy conversion efficiency.</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-title">Eşdeğer Döngü Sayısı</div>
-                <div class="kpi-value" style="color: #ff9f43;">1.150 döngü</div>
-                <div class="kpi-desc">100 MWh nominal kapasite üzerinden yıpranma oranı.</div>
+                <div class="kpi-title">Equivalent Daily Cycles</div>
+                <div class="kpi-value" style="color: #ff9f43;">1.150 Cycles</div>
+                <div class="kpi-desc">Battery cell wear calculated against 100 MWh capacity.</div>
             </div>
         </div>
         
         <div class="main-section">
             <div class="chart-card">
-                <h3>Günlük Operasyon & Şarj Grafiği</h3>
+                <h3>Daily Profile & SoC Chart</h3>
                 <div class="chart-wrapper">
-                    <img src="daily_chart.png" alt="Günlük Performans Grafiği">
+                    <img src="daily_chart.png" alt="Daily Performance Plot">
                 </div>
             </div>
             
             <div class="details-card">
                 <div>
-                    <h3>Piyasa İşlem Detayları</h3>
+                    <h3>Market Trade Details</h3>
                     <div class="detail-row">
-                        <span class="detail-label">Toplam Şarj Hacmi (Alış)</span>
+                        <span class="detail-label">Total Charge Volume (BUY)</span>
                         <span class="detail-val">80.0 MWh</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Toplam Deşarj Hacmi (Satış)</span>
+                        <span class="detail-label">Total Discharge Volume (SELL)</span>
                         <span class="detail-val">70.0 MWh</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Ortalama Şarj Alış Fiyatı</span>
+                        <span class="detail-label">Avg Charge Buy Price</span>
                         <span class="detail-val">6.47 EUR/MWh</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Ortalama Deşarj Satış Fiyatı</span>
+                        <span class="detail-label">Avg Discharge Sell Price</span>
                         <span class="detail-val">124.40 EUR/MWh</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Toplam Alış Maliyeti</span>
+                        <span class="detail-label">Total Charging Cost</span>
                         <span class="detail-val" style="color: var(--accent-red);">560.50 EUR</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Toplam Satış Geliri</span>
+                        <span class="detail-label">Total Discharging Revenue</span>
                         <span class="detail-val" style="color: var(--accent-green);">8,853.00 EUR</span>
                     </div>
                 </div>
                 
                 <div style="margin-top: 20px; font-size: 11px; color: var(--text-muted); background: #1b2438; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    💡 <b>Gün içi Özet:</b> Dün en yüksek satış geliri 19:00 piki sırasında <b>142.80 EUR/MWh</b> fiyattan elde edilmiştir. En ucuz şarj işlemi ise negatif fiyat fırsatıyla (<b>-8.20 EUR/MWh</b>) 04:00'te yapılmıştır.
+                    💡 <b>Intraday Insights:</b> The highest discharging revenue was generated at 19:00 during the evening peak price of <b>142.80 EUR/MWh</b>. The cheapest charging occurred during a negative price window (<b>-8.20 EUR/MWh</b>) at 04:00.
                 </div>
             </div>
         </div>
         
         <footer>
-            E.ON Energy Trading GmbH - Automated Trading Systems Performance Tool © 2026
+            E.ON Energy Markets GmbH - Automated Trading Systems Performance Tool © 2026
         </footer>
     </div>
 </body>

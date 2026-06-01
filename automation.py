@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-# Dosya yolları
+# File paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "bess_data.db")
 CHART_PATH = os.path.join(BASE_DIR, "daily_chart.png")
@@ -14,18 +14,18 @@ REPORT_PATH = os.path.join(BASE_DIR, "daily_report.html")
 def calculate_kpis():
     conn = sqlite3.connect(DB_NAME)
     
-    # 1. İşlem verilerini Pandas DataFrame'e oku
+    # 1. Read bilateral trades data
     trades_df = pd.read_sql_query("SELECT * FROM trades_table WHERE execution_status = 'COMPLETED'", conn)
     
-    # 2. Telemetri verilerini Pandas DataFrame'e oku
+    # 2. Read physical battery status telemetry
     telemetry_df = pd.read_sql_query("SELECT * FROM battery_status_table", conn)
     conn.close()
     
-    # Zaman formatlarını çevir
+    # Convert timestamps
     trades_df['timestamp'] = pd.to_datetime(trades_df['timestamp'])
     telemetry_df['timestamp'] = pd.to_datetime(telemetry_df['timestamp'])
     
-    # --- KPI 1: Net Arbitraj P&L ---
+    # --- KPI 1: Net Arbitrage P&L ---
     trades_df['cost_revenue'] = trades_df.apply(
         lambda row: row['volume_mwh'] * row['price_eur_per_mwh'] if row['trade_direction'] == 'SELL'
         else -row['volume_mwh'] * row['price_eur_per_mwh'], axis=1
@@ -42,8 +42,8 @@ def calculate_kpis():
     avg_sell_price = trades_df[trades_df['trade_direction'] == 'SELL']['price_eur_per_mwh'].mean() if total_sell_volume > 0 else 0
     
     # --- KPI 2: Round-Trip Efficiency (RTE %) ---
-    # 5'er dakikalık telemetry verilerinden fiziksel şarj/deşarj hesaplama (5 dk = 1/12 saat)
-    # power_mw < 0 -> Şarj, power_mw > 0 -> Deşarj
+    # Convert 5-min power interval reading (5 mins = 1/12 hour)
+    # power_mw < 0 -> Charge, power_mw > 0 -> Discharge
     telemetry_df['physical_charged_mwh'] = telemetry_df.apply(
         lambda r: abs(r['power_mw']) * (5.0 / 60.0) if r['power_mw'] < 0 else 0.0, axis=1
     )
@@ -56,8 +56,8 @@ def calculate_kpis():
     
     rte = (total_physical_discharged / total_physical_charged) * 100.0 if total_physical_charged > 0 else 0.0
     
-    # --- KPI 3: Eşdeğer Döngü Sayısı ---
-    # 50 MW / 100 MWh kapasite varsayımıyla (1 tam döngü = 100 MWh deşarj)
+    # --- KPI 3: Equivalent Daily Cycles ---
+    # Assuming 100 MWh nominal storage capacity
     nominal_capacity_mwh = 100.0
     cycles = total_physical_discharged / nominal_capacity_mwh
     
@@ -81,39 +81,38 @@ def generate_visualization(trades_df, telemetry_df):
     
     fig, ax1 = plt.subplots(figsize=(12, 6), dpi=150)
     
-    # Sol Eksen: State of Charge (%)
-    color1 = '#00a3e0'  # Enerji Mavisi
-    ax1.set_xlabel('Saat (Günlük Akış)', fontweight='bold', labelpad=10)
-    ax1.set_ylabel('Batarya Doluluk Oranı (SoC %)', color=color1, fontweight='bold')
+    # Left Axis: State of Charge (%)
+    color1 = '#00a3e0'  # Energy Blue
+    ax1.set_xlabel('Time (Daily Profile)', fontweight='bold', labelpad=10)
+    ax1.set_ylabel('State of Charge (SoC %)', color=color1, fontweight='bold')
     line_soc = ax1.plot(telemetry_df['timestamp'], telemetry_df['soc_percentage'], color=color1, linewidth=2.5, label='State of Charge (%)')
     ax1.tick_params(axis='y', labelcolor=color1)
     ax1.set_ylim(0, 105)
     
-    # Sağ Eksen: Batarya Gücü (MW)
+    # Right Axis: Active Power (MW)
     ax2 = ax1.twinx()
-    color2 = '#ff4a5a'  # Enerji Kırmızısı/Turuncu
-    ax2.set_ylabel('Fiziksel Güç (Charge (-) / Discharge (+)) [MW]', color=color2, fontweight='bold')
-    line_power = ax2.plot(telemetry_df['timestamp'], telemetry_df['power_mw'], color=color2, linewidth=1.5, alpha=0.7, linestyle='--', label='Güç (MW)')
+    color2 = '#ff4a5a'  # Energy Red
+    ax2.set_ylabel('Active Power (Charge (-) / Discharge (+)) [MW]', color=color2, fontweight='bold')
+    line_power = ax2.plot(telemetry_df['timestamp'], telemetry_df['power_mw'], color=color2, linewidth=1.5, alpha=0.7, linestyle='--', label='Power (MW)')
     ax2.tick_params(axis='y', labelcolor=color2)
     ax2.set_ylim(-60, 60)
     
-    # İşlemleri Grafik Üzerine İşaretleme (Scatter)
+    # Map Bilateral Trades (Scatter points)
     buys = trades_df[trades_df['trade_direction'] == 'BUY']
     sells = trades_df[trades_df['trade_direction'] == 'SELL']
     
-    sc1 = ax2.scatter(buys['timestamp'], [0]*len(buys), color='#2ecc71', s=120, label='Şarj Alış Emri (BUY)', zorder=5, edgecolors='black', marker='^')
-    sc2 = ax2.scatter(sells['timestamp'], [0]*len(sells), color='#e74c3c', s=120, label='Deşarj Satış Emri (SELL)', zorder=5, edgecolors='black', marker='v')
+    sc1 = ax2.scatter(buys['timestamp'], [0]*len(buys), color='#2ecc71', s=120, label='Trade BUY Order', zorder=5, edgecolors='black', marker='^')
+    sc2 = ax2.scatter(sells['timestamp'], [0]*len(sells), color='#e74c3c', s=120, label='Trade SELL Order', zorder=5, edgecolors='black', marker='v')
     
-    # Zaman eksenini biçimlendir
+    # Date formatting
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     ax1.xaxis.set_major_locator(mdates.HourLocator(interval=2))
     plt.gcf().autofmt_xdate()
     
-    # Başlık ve Izgara
-    yesterday_str = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%d.%m.%Y')
-    plt.title(f"E.ON Bavyera 50 MW BESS Günlük Performans Analizi - {yesterday_str}", fontsize=14, fontweight='bold', pad=15)
+    # Title & Legend
+    yesterday_str = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    plt.title(f"E.ON Bavaria 50 MW BESS Performance Analytics - {yesterday_str}", fontsize=14, fontweight='bold', pad=15)
     
-    # Ortak Lejant oluştur
     lines = line_soc + line_power + [sc1, sc2]
     labels = [l.get_label() for l in lines]
     ax1.legend(lines, labels, loc='upper left', frameon=True, facecolor='white', framealpha=0.9)
@@ -121,19 +120,18 @@ def generate_visualization(trades_df, telemetry_df):
     plt.tight_layout()
     plt.savefig(CHART_PATH)
     plt.close()
-    print(f"Görselleştirme grafiği kaydedildi: {CHART_PATH}")
+    print(f"Visualization chart saved to: {CHART_PATH}")
 
 def write_html_report(metrics):
-    # HTML rengi ve tasarımı için modern CSS içeren şablon
     pnl_class = "positive" if metrics['net_pnl'] >= 0 else "negative"
     pnl_sign = "+" if metrics['net_pnl'] >= 0 else ""
     
     html_content = f"""<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E.ON BESS Günlük Performans Raporu</title>
+    <title>E.ON BESS Daily Performance Report</title>
     <style>
         :root {{
             --bg-color: #0b0f19;
@@ -325,75 +323,75 @@ def write_html_report(metrics):
     <div class="container">
         <header>
             <div class="logo-area">
-                <h1>E.ON Bavyera 50 MW BESS</h1>
-                <span>Intraday Algoritmik Trading Raporu</span>
+                <h1>E.ON Bavaria 50 MW BESS</h1>
+                <span>Intraday Algorithmic Trading Performance</span>
             </div>
-            <div class="date-badge">Tarih: {metrics['yesterday']}</div>
+            <div class="date-badge">Date: {metrics['yesterday']}</div>
         </header>
         
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-title">Günlük Net Arbitraj Geliri</div>
+                <div class="kpi-title">Daily Net Arbitrage Revenue</div>
                 <div class="kpi-value {pnl_class}">{pnl_sign}{metrics['net_pnl']:,.2f} EUR</div>
-                <div class="kpi-desc">BUY ve SELL işlemleri arası net nakit farkı.</div>
+                <div class="kpi-desc">Net profit difference between BUY and SELL executions.</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-title">Round-Trip Efficiency (RTE)</div>
-                <div class="kpi-value" style="color: var(--primary);">{metrics['rte']:.1f}%</div>
-                <div class="kpi-desc">Fiziksel Deşarj / Şarj enerji dönüşüm verimliliği.</div>
+                <div class="kpi-value" style="color: var(--primary);">{metrics['rte']:.2f}%</div>
+                <div class="kpi-desc">Physical Discharge / Charge energy conversion efficiency.</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-title">Eşdeğer Döngü Sayısı</div>
-                <div class="kpi-value" style="color: #ff9f43;">{metrics['cycles']:.3f} döngü</div>
-                <div class="kpi-desc">100 MWh nominal kapasite üzerinden yıpranma oranı.</div>
+                <div class="kpi-title">Equivalent Daily Cycles</div>
+                <div class="kpi-value" style="color: #ff9f43;">{metrics['cycles']:.3f} Cycles</div>
+                <div class="kpi-desc">Battery cell wear calculated against 100 MWh capacity.</div>
             </div>
         </div>
         
         <div class="main-section">
             <div class="chart-card">
-                <h3>Günlük Operasyon & Şarj Grafiği</h3>
+                <h3>Daily Profile & SoC Chart</h3>
                 <div class="chart-wrapper">
-                    <img src="daily_chart.png" alt="Günlük Performans Grafiği">
+                    <img src="daily_chart.png" alt="Daily Performance Plot">
                 </div>
             </div>
             
             <div class="details-card">
                 <div>
-                    <h3>Piyasa İşlem Detayları</h3>
+                    <h3>Market Trade Details</h3>
                     <div class="detail-row">
-                        <span class="detail-label">Toplam Şarj Hacmi (Alış)</span>
+                        <span class="detail-label">Total Charge Volume (BUY)</span>
                         <span class="detail-val">{metrics['buy_vol']:,.1f} MWh</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Toplam Deşarj Hacmi (Satış)</span>
+                        <span class="detail-label">Total Discharge Volume (SELL)</span>
                         <span class="detail-val">{metrics['sell_vol']:,.1f} MWh</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Ortalama Şarj Alış Fiyatı</span>
+                        <span class="detail-label">Avg Charge Buy Price</span>
                         <span class="detail-val">{metrics['avg_buy']:,.2f} EUR/MWh</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Ortalama Deşarj Satış Fiyatı</span>
+                        <span class="detail-label">Avg Discharge Sell Price</span>
                         <span class="detail-val">{metrics['avg_sell']:,.2f} EUR/MWh</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Toplam Alış Maliyeti</span>
+                        <span class="detail-label">Total Charging Cost</span>
                         <span class="detail-val" style="color: var(--accent-red);">{metrics['total_buy_cost']:,.2f} EUR</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Toplam Satış Geliri</span>
+                        <span class="detail-label">Total Discharging Revenue</span>
                         <span class="detail-val" style="color: var(--accent-green);">{metrics['total_sell_revenue']:,.2f} EUR</span>
                     </div>
                 </div>
                 
                 <div style="margin-top: 20px; font-size: 11px; color: var(--text-muted); background: #1b2438; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    💡 <b>Gün içi Özet:</b> Dün en yüksek satış geliri 19:00 piki sırasında <b>142.80 EUR/MWh</b> fiyattan elde edilmiştir. En ucuz şarj işlemi ise negatif fiyat fırsatıyla (<b>-8.20 EUR/MWh</b>) 04:00'te yapılmıştır.
+                    💡 <b>Intraday Insights:</b> The highest discharging revenue was generated at 19:00 during the evening peak price of <b>142.80 EUR/MWh</b>. The cheapest charging occurred during a negative price window (<b>-8.20 EUR/MWh</b>) at 04:00.
                 </div>
             </div>
         </div>
         
         <footer>
-            E.ON Energy Trading GmbH - Automated Trading Systems Performance Tool © 2026
+            E.ON Energy Markets GmbH - Automated Trading Systems Performance Tool © 2026
         </footer>
     </div>
 </body>
@@ -401,17 +399,17 @@ def write_html_report(metrics):
 """
     with open(REPORT_PATH, "w", encoding="utf-8") as file:
         file.write(html_content)
-    print(f"HTML performans raporu oluşturuldu: {REPORT_PATH}")
+    print(f"HTML performance report generated at: {REPORT_PATH}")
 
 def main():
-    print("BESS Performans Raporlama Otomasyonu Başlatıldı...")
+    print("BESS Daily Reporting Automation Initialized...")
     try:
         metrics, trades_df, telemetry_df = calculate_kpis()
         generate_visualization(trades_df, telemetry_df)
         write_html_report(metrics)
-        print("Otomasyon başarıyla sonlandırıldı!")
+        print("Performance analysis execution completed successfully.")
     except Exception as e:
-        print(f"Otomasyon hatası oluştu: {e}")
+        print(f"Automation execution failed: {e}")
 
 if __name__ == "__main__":
     main()

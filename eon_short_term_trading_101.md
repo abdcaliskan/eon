@@ -1,70 +1,67 @@
 # E.ON Energy Markets - Short-Term Trading & BESS 101
-## Mülakat ve Sektör Hazırlık Rehberi (Working Student Short-Term Trading)
+## Interview & Market Preparation Guide (Working Student Short-Term Trading)
 
-Bu rehber, **E.ON Energy Markets GmbH (EEM)** bünyesindeki **Working Student Short-Term Trading** rolünün mülakatlarında seni en üst sıraya taşıyacak sektörel bilgileri, teknik tanımları ve hazırladığımız simülasyonları içeren kapsamlı bir kılavuzdur.
-
----
-
-## Bölüm 1: E.ON Energy Markets (EEM) ve Rolün Amacı
-
-**E.ON Energy Markets (EEM)**, E.ON Grubu'nun Essen ve Münih merkezli enerji ticaret koludur. Temel amacı, E.ON'un bölgesel operasyonel birimlerinin (Regional Business Units) enerji piyasalarına erişimini koordine etmek, portföy risklerini yönetmek ve esnek varlıkları (BESS vb.) optimize etmektir.
-
-### 🏃 Bir Playmaker Olarak Sorumluluğun:
-Bu rolde **ST Flex (Short-Term Flexibility) ve Algoritmik Trading** ekibinin bir parçası olacaksın. Temel görevin:
-*   Batarya Enerji Depolama Sistemleri'nin (BESS) ve diğer esnek varlıkların kısa vadeli elektrik piyasalarına (Day-Ahead, Intraday, Balancing) entegrasyonuna destek olmak.
-*   Trading operasyonlarında veri akışlarını otomatikleştirmek, performans raporları hazırlamak (Power BI/Python/SQL) ve IT ile trading masası arasında köprü olmaktır (User Story yazmak).
+This guide provides the core market dynamics, technical terminology, and code-based scenarios designed to help you succeed in your interview for the **Working Student Short-Term Trading** position at **E.ON Energy Markets GmbH (EEM)** in Munich.
 
 ---
 
-## Bölüm 2: Almanya Kısa Vadeli Elektrik Piyasaları 101
+## Section 1: E.ON Energy Markets & Role Context
 
-Almanya enerji piyasası, BESS entegrasyonu için Avrupa'nın en gelişmiş ve dinamik piyasasıdır. Ticaret 3 ana vadede döner:
+**E.ON Energy Markets (EEM)** is the energy trading and risk management subsidiary of the E.ON Group, located in Essen and Munich. EEM coordinates market access for E.ON's regional business units, manages commodity risks, and optimizes flexible energy assets (such as BESS) across European markets.
 
-| Piyasa Türü | Ticaret Zamanı | Sözleşme Tipleri | BESS İçin Önemi |
+### 🏃 Your Role as a Playmaker:
+As a Working Student in the **ST Flex & Algorithmic Trading Team**, you will:
+*   Support the onboarding of flexible assets like Battery Energy Storage Systems (BESS) into trading systems.
+*   Bridge the gap between traders and IT by translating trading strategies into structured software specifications (User Stories/Acceptance Criteria).
+*   Automate daily performance reports using Python/SQL and build visual dashboards in Power BI to track trading efficiency.
+
+---
+
+## Section 2: German Short-Term Power Markets 101
+
+Germany is Europe's leading market for BESS deployments. Energy is traded across three main horizons:
+
+| Market | Trading Horizon | Contract Types | Importance for BESS |
 | :--- | :--- | :--- | :--- |
-| **Day-Ahead Market (EPEX SPOT)** | Teslimat gününden bir önceki gün saat **12:00 (CET)**'de kapanan açık artırma (auction). | Saatlik veya Blok elektrik sözleşmeleri. | Günlük baz yük şarj/deşarj planını (base schedule) belirlemek için kullanılır. |
-| **Intraday Market (EPEX SPOT)** | Kesintisiz (continuous) olarak teslimat saatinden **5 ila 30 dakika** öncesine kadar işlem yapılabilir. | Saatlik veya 15 Dakikalık (Quarter-hourly) sözleşmeler. | **Arbitraj Fırsatı:** Rüzgar/Güneş dalgalanmalarına göre fiyatlar anlık değişir (negatif fiyatlar oluşur). Batarya hızlı tepkiyle kar marjını büyütür. |
-| **Balancing Markets (Dengeleme/Yedek Güç)** | TSO'lar (Şebeke Operatörleri: TenneT, Amprion vb.) şebeke frekansını (50 Hz) korumak için satın alır. | FCR (Saniyelik tepki), aFRR (Dakikalık tepki). | **Kapasite Ödemesi:** Batarya şebekeye bağlı kalıp beklediği (rezerv ayırdığı) her saat için ödeme alır. |
+| **Day-Ahead Market (EPEX SPOT)** | Closes at **12:00 CET** on the day before delivery. | Hourly or block contracts. | Establishes the battery's baseline charging/discharging schedule for the next day. |
+| **Intraday Market (EPEX SPOT)** | Continuous trading, up to **5-30 minutes** before physical delivery. | Hourly or 15-minute contracts. | **Arbitrage Optimization:** Captures unexpected grid imbalances (e.g. solar dropouts) which create negative or spiked prices. |
+| **Balancing Markets (Ancillary Services)** | Contracted by Transmission System Operators (TSOs) to keep grid frequency at 50 Hz. | FCR (Frequency Containment Reserve), aFRR. | **Capacity Payments:** Batteries receive fixed payments simply for staying connected and being ready to charge or discharge. |
 
 ---
 
-## Bölüm 3: BESS (Batarya Depolama) Teknik Terimleri & Metrikleri
+## Section 3: BESS Technical Parameters & Metrics
 
-Mülakatta bu terimleri profesyonelce kullanman seni doğrudan kıdemli bir aday gibi gösterecektir:
+Understanding these metrics is vital for battery asset management:
 
-*   **State of Charge (SoC - Doluluk Oranı %):** Bataryanın o anki enerji seviyesidir. Fiziksel ömrü korumak için genelde %10 (SoC_min) ile %100 (SoC_max) arasında çalıştırılır.
-*   **Round-Trip Efficiency (RTE - Gidiş-Dönüş Verimliliği %):** Şebekeden çekilen şarj enerjisinin ne kadarının deşarj edilerek şebekeye geri verilebildiğidir. Lityum-iyon piller için bu oran **%85 - %90** civarındadır (kalan %10-15 ısı ve dönüştürücü kaybıdır).
-*   **Equivalent Cycles (Eşdeğer Döngü Sayısı):** Bataryanın yıpranma (degradasyon) ölçüsüdür. Bataryanın kapasitesi kadar deşarj yapılması 1 döngü sayılır. Günlük döngü bütçesi aşılırsa batarya garantisi zarar görür.
-*   **Ausgleichsenergie (Dengesizlik Cezası):** Satış taahhüdü verilip fiziksel olarak elektrik teslim edilmediğinde ödenen cezadır. Almanya şebeke operatörleri (TSO), bu açığı kapatmak için **reBiG** (dengesizlik fiyatı) üzerinden E.ON'a ceza keser.
+*   **State of Charge (SoC %):** The battery's current charge level. Usually kept between 10% (SoC_min) and 100% (SoC_max) to prevent accelerated chemical degradation.
+*   **Round-Trip Efficiency (RTE %):** The ratio of energy retrieved from the battery to the energy put in. Lithium-ion systems typically have an RTE of **85% - 90%** due to AC/DC conversion losses and cooling consumption.
+*   **Equivalent Cycles:** Represents the battery cell wear. Discharging the equivalent of the battery's nominal capacity (100 MWh) counts as 1 full cycle. Asset lifetime is evaluated by cumulative cycles.
+*   **Imbalance Price (reBiG / Ausgleichsenergie):** The penalty rate charged by TSOs if a trading unit commits to a trade but fails to physically deliver the power.
 
 ---
 
-## Bölüm 4: Mülakatta Karşılaşabileceğin Sorular ve "Simülasyon" Referanslı Cevaplar
+## Section 4: Key Interview Questions & Custom Answers
 
-### Soru 1: Bir BESS projesinde trader'lar ile IT/Geliştirici ekibi arasındaki en büyük operasyonel risklerden biri nedir ve bunu nasıl çözersin?
-> **Yanıt:** En büyük risklerden biri trading botunun agresif çalışarak fiziksel sınırları (bataryanın boş olması gibi) göz ardı etmesi ve E.ON'a dengesizlik cezası (Ausgleichsenergie) ödetmesidir.
+### Q1: What is the biggest operational risk when connecting an algorithmic trading bot to a BESS, and how do you prevent it?
+> **Answer:** The primary risk is a mismatch between market trades and physical battery capacity. If the trading bot executes a SELL trade when the battery is physically empty, E.ON fails to deliver power, incurring heavy TSO imbalance penalties (Ausgleichsenergie).
 > 
-> *Çözüm olarak:* IT ekibinin anlayacağı dilde net Gherkin kabul kriterlerine sahip bir **User Story** hazırlarım. Piyasaya satış emri iletilmeden önce sistemin telemetri verilerinden anlık **State of Charge (SoC)** bilgisini sorgulamasını ve yeterli enerji yoksa emri bloklamasını sağlayan bir fail-safe mekanizması kurgularım.
-> *(Referans: Projemizdeki [db_setup.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/db_setup.py) ve [automation.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/automation.py) kodları).*
+> *Solution:* I translate this operational boundary into a structured **User Story** for the developers using Gherkin (`Given-When-Then`) syntax. The trading script must query real-time **State of Charge (SoC)** telemetry before submitting an order, automatically blocking or scale-down any order that violates the battery's physical limit.
+> *(Reference: Proving it with our [db_setup.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/db_setup.py) and [automation.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/automation.py) codes).*
 
-### Soru 2: Algo botun SoC kontrolü yapmaması E.ON'a finansal olarak nasıl yansır? Bir simülasyon yaptın mı?
-> **Yanıt:** Evet, bunu simüle eden bir çalışma yaptım. Örneğin, 25 MWh'lik bir akşam piki satış emrinde batarya boşsa ve bot SoC kontrolü yapmadan bu emri borsaya gönderirse:
-> *   Bot borsa fiyatı üzerinden (örn. 142.80 EUR/MWh) satış geliri taahhüt eder.
-> *   Ancak teslimat yapılamadığı için şebeke operatörü ortalama 280 EUR/MWh reBiG fiyatından **dengesizlik cezası** keser.
-> *   Sonuçta **-3,430 EUR** net zarar oluşur. SoC doğrulaması yapan güvenli bot ise bu siparişi bloke ederek E.ON'u bu zarardan kurtarır.
-> *(Referans: Yazdığımız [imbalance_simulation.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/imbalance_simulation.py) betiği).*
+### Q2: How does the lack of a State of Charge check impact E.ON financially? Have you simulated this?
+> **Answer:** Yes, I simulated a scenario where a bot tries to execute a 25 MWh peak-hour SELL trade at 142.80 €/MWh when the battery is empty.
+> *   Without SoC checks (Aggressive Bot): The bot submits the trade, fails to deliver, and pays a TSO imbalance penalty (e.g. at 280.00 €/MWh reBiG), resulting in a net loss of **-3,430.00 €** on a single transaction.
+> *   With SoC checks (Safe Bot): The bot blocks the order. The risk and penalty are fully avoided (0.00 € loss).
+> *(Reference: Evaluated in our [imbalance_simulation.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/imbalance_simulation.py) script).*
 
-### Soru 3: Bataryayı hem spot piyasada (Intraday) arbitraj için koşturup hem de frekans dengeleme (FCR) hizmetine soktuğumuzda trading botu nasıl kısıtlamalıyız?
-> **Yanıt:** FCR (Frequency Containment Reserve) çift yönlü simetrik bir hizmettir. Yani şebeke frekansı düştüğünde deşarj, yükseldiğinde ise şarj olmaya hazır olmalıyız. TSO kurallarına göre en az 30 dakika boyunca taahhüt ettiğimiz FCR gücünü (örn. 15 MW) verebilecek enerji rezervini korumalıyız (15 MW * 0.5h = 7.5 MWh).
+### Q3: When a battery participates in both the Intraday market and the FCR balancing market, how does FCR limit the trading strategy?
+> **Answer:** FCR is a symmetric frequency response service. The battery must maintain a capacity buffer to either inject or absorb power for 30 minutes (e.g. 15 MW FCR requires a 7.5 MWh energy buffer).
 > 
-> Bu durum trading botunun hareket alanını kısıtlar:
-> *   Batarya kapasitesi 100 MWh ise, botun ticaret yapabileceği güvenli SoC bandı **%17.5 ile %92.5** arasına sıkışır.
-> *   Bu limitleri aşan şarj (BUY) veya deşarj (SELL) emirleri trading sistemi tarafından ya tamamen engellenmeli ya da limit sınırına kadar ölçeklendirilmelidir (downscaled).
-> *(Referans: Yazdığımız [fcr_constraints.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/fcr_constraints.py) betiği).*
+> This restricts the battery's active trading SoC band:
+> *   For a 100 MWh BESS, the trading bot is restricted to operate only between **17.5% and 92.5% SoC**.
+> *   Any Intraday trade that pushes the projected SoC outside this band must be blocked or downscaled to ensure FCR availability.
+> *(Reference: Modeled in our [fcr_constraints.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/fcr_constraints.py) logic).*
 
-### Soru 4: Süreç otomasyonu (Process Automation) ve Raporlama konusunda ne tür deneyimlerin var?
-> **Yanıt:** Excel/CSV üzerinden yapılan manuel raporlama süreçlerini otomatikleştirecek Python mimarileri tasarlıyorum. SQLite veri tabanından telemetri ve işlem verilerini SQL sorgularıyla Pandas ortamına çekip; Net P&L, RTE% ve Döngü Sayısı gibi KPI'ları otomatik hesaplayan, Matplotlib ile şarj profil grafiklerini üreten ve bunu modern bir HTML raporuna dökerek otomatik e-posta gönderimini tetikleyen uçtan uca orkestratör betikleri kurguladım.
-> *(Referans: Yazdığımız [run_automation.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/run_automation.py) betiği).*
-
----
-*Bu rehber ve beraberindeki Python simülasyonları, mülakat sırasında E.ON trading ekiplerine teknik ve piyasa hakimiyetini doğrudan kanıtlayacaktır.*
+### Q4: How would you automate daily trading reports instead of relying on manual downloads?
+> **Answer:** I write python-based automated scripts. The script connects to the borsa API using `requests` (or web scrapers), loads data into `pandas`, calculates metrics (Net P&L, RTE %, Cycles), plots trade performance using `matplotlib`, and exports clean, regional-compatible CSV files (semicolon delimited for European Power BI locales). Finally, it structures a responsive HTML report and emails it to the desk automatically.
+> *(Reference: Deployed in [run_automation.py](file:///c:/Users/abdul/OneDrive/Desktop/BESS_Trading_Automation/run_automation.py)).*
