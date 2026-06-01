@@ -2,6 +2,12 @@
 
 This repository contains the complete algorithmic trading validation, process automation, and database design for E.ON's 50 MW Battery Energy Storage System (BESS) project in Bavaria.
 
+## 📊 Daily Performance Visualization
+
+Here is the generated chart representing the state of charge (SoC %) and active charging/discharging power (MW) profiles along with the executed buy/sell trades:
+
+![BESS Performance Chart](daily_chart.png)
+
 ## 📁 Repository Structure
 
 *   `db_setup.py`: Initializes the SQLite database and populates it with realistic 24-hour BESS charge/discharge profiles and trading logs.
