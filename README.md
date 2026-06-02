@@ -2,11 +2,11 @@
 
 This repository contains the complete algorithmic trading validation, process automation, and database design for E.ON's 50 MW Battery Energy Storage System (BESS) project in Bavaria.
 
-## 📊 Daily Performance Visualization
+## 📊 Power BI Performance Dashboard
 
-Here is the generated chart representing the state of charge (SoC %) and active charging/discharging power (MW) profiles along with the executed buy/sell trades:
+Here is the finalized Power BI Dashboard showing the BESS daily metrics (P&L, RTE %, and Equivalent Cycles), active power, SoC profile, trade scatter distributions, and battery temperature matrix:
 
-![BESS Performance Chart](daily_chart.png)
+![Power BI BESS Dashboard](powerbi_dashboard.png)
 
 ## 📁 Repository Structure
 
