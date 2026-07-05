@@ -16,6 +16,7 @@ Here is the finalized Power BI Dashboard showing the BESS daily metrics (P&L, RT
 *   `export_to_csv.py`: Exports database tables to Turkish/European locale-compatible CSV files (`;` delimited, `,` decimals) for seamless import into Power BI.
 *   `imbalance_simulation.py`: Simulates the financial impact of grid imbalance penalties (Ausgleichsenergie / reBiG) when trading without State of Charge (SoC) verification, demonstrating E.ON's penalty savings.
 *   `fcr_constraints.py`: Restricts the active trading SoC band (to 17.5% - 92.5%) based on FCR (Frequency Containment Reserve) capacity commitments to ensure grid compliance.
+*   `backtest_engine.py`: Simulates a greedy arbitrage dispatch optimizer over a 24-hour volatile German Intraday price profile. Respects RTE losses (90%), battery degradation costs (15 EUR/MWh), and FCR SoC constraints to calculate the net operational profit of a dispatch strategy.
 *   `bess_integration_case_study.md`: Detailed case study solution containing the agile User Story, SQL schemas, and automation flowcharts.
 *   `eon_short_term_trading_101.md`: Premium interview preparation guide for Short-Term Trading & BESS parameters (SoC, RTE, Cycles, reBiG).
 
